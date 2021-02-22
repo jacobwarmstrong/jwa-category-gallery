@@ -17,17 +17,27 @@ function add_tags_for_attachments() {
 }
 add_action( 'init' , 'add_tags_for_attachments' );
 
+function catgal_get_images_setup() {
+    if ( isset($_GET['tag']) ) {
+        $tag = $_GET['tag'];
+    } else {
+        $tag = null;
+    }
+    new CategoryGallery($tag);
+}
+add_action('setup_theme', 'catgal_get_images_setup');
 
 class CategoryGallery {
     //properties
     public $category;
-    private $tags= [];
+    private $tag;
     private $images = [];
     private $htmlImages = [];
     private $link = 'what';
     
-    function __construct() {
+    function __construct($tag) {
         add_shortcode('category-gallery', array($this, 'return_htmlImages') );
+        $this->tag = $tag;
     }
     
     public function return_htmlImages($atts) {
@@ -38,7 +48,7 @@ class CategoryGallery {
             } else {
                 $category = '3d-cnc-routed-signs,vehicle-wraps,channel-letter-signs,dimensional-letters,informational-signs,monument-signs,police-emergency-vehicles,label-decals,wayfinding-signs';
             }
-            $this->images = $this->get_gallery_images($category);
+            $this->images = get_gallery_images($category);
             if(!empty($images)) {
                 $tags = get_all_tags_for_posts($images);
             }
@@ -48,25 +58,40 @@ class CategoryGallery {
                     array_push($this->htmlImages, $this->get_attachment_link($id) );
                 }
             }
-            $thestuff = '<div class="charmer-gallery row">';
+        $thestuff = '';
+            if( !empty($this->tag) ) {
+                $thestuff.= '<div class="my-2">';
+                $thestuff .= '<span>Tags associated with';
+                $thestuff .= $selected;
+                $thestuff .= ':</span>';
+                $thestuff .= '<div class="d-flex flex-row flex-wrap my-2">';
+                    foreach($tags as $tag_id) :
+                        if($tag_id == $tag) {
+                            $tag_class = 'badge-selected';
+                        } else {
+                            $tag_class = 'badge-primary';
+                        }
+                $thestuff .= '<a href="?tag=';
+                $thestuff .= $tag_id;
+                $thestuff .= '" class="badge badge-pill my-1';
+                $thestuff .= $tag_class;
+                $thestuff .= '">';
+                $thestuff .= get_tag($tag_id)->name;
+                $thestuff .= '</a>';
+                    endforeach;
+                $thestuff .= '</div>';
+                if ($tag) :
+                $thestuff .= '<a href="?reset=true" class="btn btn-outline-primary my-2">Reset Tag Filter</a>';
+                endif;
+                $thestuff .= '</div>';
+            }
+            $thestuff .= '<div class="charmer-gallery row">';
+        
                 foreach ($this->htmlImages as $html) {
                  $thestuff .= $html;
             }
             $thestuff .= '</div>';
                return $thestuff;
-    }
-    
-    public function get_gallery_images($category) {
-        //create args based on tag input or not
-        $args = array('post_type' => 'attachment', 'post_status' => 'inherit', 'category_name' => $category, 'numberposts' => -1, 'orderby' => 'rand');
-        //if tag is added, add to query arguments
-        $images = get_posts($args); 
-        if ( $images ) {
-            return $images;
-        } else {
-            // no posts found
-            echo 'No images for this category!';
-        }
     }
     
     //specific img html output for gallery
@@ -95,18 +120,6 @@ class CategoryGallery {
         return $html;
     }
 }
-
-function catgal_get_images_setup() {
-    new CategoryGallery();
-}
-add_action('setup_theme', 'catgal_get_images_setup');
-
-
-
-
-
-
-
 
 function get_all_tags_for_posts($posts) {
     $all_tags = [];
@@ -187,6 +200,22 @@ function the_previous_image($images, $current_order, $tag = null) {
         }
     return $previousImg;
 }
+
+function get_gallery_images($category, $tag = null) {
+        //create args based on tag input or not
+        $args = array('post_type' => 'attachment', 'post_status' => 'inherit', 'category_name' => $category, 'numberposts' => -1, 'orderby' => 'rand');
+        //if tag is added, add to query arguments
+        if( $tag != null ) {
+            $args['tag_id'] = $tag;
+        }
+        $images = get_posts($args); 
+        if ( $images ) {
+            return $images;
+        } else {
+            // no posts found
+            echo 'No images for this category!';
+        }
+    }
 
 
 function setup_lightbox_images($id) {
