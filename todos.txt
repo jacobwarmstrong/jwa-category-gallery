@@ -1,4 +1,2 @@
-1.get shortcode to spit out some string.
-2.get all images to spit out
-3.get images to spit out based on category slug
 4. add tags back into the equation or let it ride without for now?
+5. get attachment template to show properly again

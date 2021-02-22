@@ -20,39 +20,45 @@ add_action( 'init' , 'add_tags_for_attachments' );
 
 class CategoryGallery {
     //properties
-    private $category;
+    public $category;
     private $tags= [];
     private $images = [];
     private $htmlImages = [];
     private $link = 'what';
     
-    function __construct($category) {
-        $this->images = $this->get_gallery_images();
-        if(!empty($images)) {
-            $tags = get_all_tags_for_posts($images);
-        }
-        if(!empty($this->images)) {
-            foreach ($this->images as $image) {
-                $id = $image->ID;
-                array_push($this->htmlImages, $this->get_attachment_link($id) );
-            }
-        }
+    function __construct() {
         add_shortcode('category-gallery', array($this, 'return_htmlImages') );
     }
     
-    public function spit_out_str() {
-        echo 'oh wow what a big penis I have';
+    public function return_htmlImages($atts) {
+            //if category is specified in shortcode, then use it
+            if(!empty($atts)){
+                $category = $atts['category'];
+            //else grab all sign-product categories
+            } else {
+                $category = '3d-cnc-routed-signs,vehicle-wraps,channel-letter-signs,dimensional-letters,informational-signs,monument-signs,police-emergency-vehicles,label-decals,wayfinding-signs';
+            }
+            $this->images = $this->get_gallery_images($category);
+            if(!empty($images)) {
+                $tags = get_all_tags_for_posts($images);
+            }
+            if(!empty($this->images)) {
+                foreach ($this->images as $image) {
+                    $id = $image->ID;
+                    array_push($this->htmlImages, $this->get_attachment_link($id) );
+                }
+            }
+            $thestuff = '<div class="charmer-gallery row">';
+                foreach ($this->htmlImages as $html) {
+                 $thestuff .= $html;
+            }
+            $thestuff .= '</div>';
+               return $thestuff;
     }
     
-    public function return_htmlImages() {
-        foreach ($this->htmlImages as $html) {
-            echo $html;
-        }
-    }
-    
-    public function get_gallery_images() {
+    public function get_gallery_images($category) {
         //create args based on tag input or not
-        $args = array('post_type' => 'attachment', 'post_status' => 'inherit', 'category_name' => $this->category, 'numberposts' => -1 );
+        $args = array('post_type' => 'attachment', 'post_status' => 'inherit', 'category_name' => $category, 'numberposts' => -1, 'orderby' => 'rand');
         //if tag is added, add to query arguments
         $images = get_posts($args); 
         if ( $images ) {
@@ -77,11 +83,13 @@ class CategoryGallery {
         }
 
         //assemble img html
-        $html = '<a href="' . $img['uri'] . '">';
+        $html = '<div class="col-md-4 image-boundaries">';
+        $html .= '<a href="' . $img['uri'] . '">';
         $html .= '<div class="image-info-overlay d-flex justify-content-center align-items-center"><h3>'. $img['title']. '</h3></div>';
         $html .= '<img class="' . $img['class'] .'" src="' . $img['src'] . '" ';
         $html .= '"alt="' . $img['alt'] . '">';
         $html .= '</a>';
+        $html .= '</div>';
 
         //return html
         return $html;
@@ -89,7 +97,7 @@ class CategoryGallery {
 }
 
 function catgal_get_images_setup() {
-    new CategoryGallery('vehicle-wraps');
+    new CategoryGallery();
 }
 add_action('setup_theme', 'catgal_get_images_setup');
 
