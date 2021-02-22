@@ -17,22 +17,43 @@ function add_tags_for_attachments() {
 }
 add_action( 'init' , 'add_tags_for_attachments' );
 
+
 class CategoryGallery {
     //properties
     private $category;
     private $tags= [];
+    private $images = [];
+    private $htmlImages = [];
+    private $link = 'what';
     
     function __construct($category) {
-        add_shortcode('category-gallery', array($this, 'get_gallery_images') );
+        $this->images = $this->get_gallery_images();
+        if(!empty($images)) {
+            $tags = get_all_tags_for_posts($images);
+        }
+        if(!empty($this->images)) {
+            foreach ($this->images as $image) {
+                $id = $image->ID;
+                array_push($this->htmlImages, $this->get_attachment_link($id) );
+            }
+        }
+        add_shortcode('category-gallery', array($this, 'return_htmlImages') );
     }
     
-    private function get_gallery_images() {
+    public function spit_out_str() {
+        echo 'oh wow what a big penis I have';
+    }
+    
+    public function return_htmlImages() {
+        foreach ($this->htmlImages as $html) {
+            echo $html;
+        }
+    }
+    
+    public function get_gallery_images() {
         //create args based on tag input or not
         $args = array('post_type' => 'attachment', 'post_status' => 'inherit', 'category_name' => $this->category, 'numberposts' => -1 );
         //if tag is added, add to query arguments
-        if( $tag != null ) {
-            $args['tag_id'] = $tag;
-        }
         $images = get_posts($args); 
         if ( $images ) {
             return $images;
@@ -41,34 +62,41 @@ class CategoryGallery {
             echo 'No images for this category!';
         }
     }
-}
-
-
-
-//specific img html output for gallery
-function catgal_get_attachment_link($post_id, $tag = null) {
-    //use wordpress functions to get our img info
-    $img['src'] = wp_get_attachment_image_src($post_id, 'sign-gallery')[0];
-    $img['title'] = get_the_title($post_id);
-    $img['alt'] = get_post_meta($post_id, '_wp_attachment_image_alt', true);
-    $img['uri'] = get_permalink($post_id);
-    $img['class'] = 'gallery-thumb';
     
-    //if tag is in arg, then add it to the uri
-    if($tag) {
-        $img['uri'] .= '?tag=' . $tag;
+    //specific img html output for gallery
+    public function get_attachment_link($post_id, $tag = null) {
+        //use wordpress functions to get our img info
+        $img['src'] = wp_get_attachment_image_src($post_id, 'sign-gallery')[0];
+        $img['title'] = get_the_title($post_id);
+        $img['alt'] = get_post_meta($post_id, '_wp_attachment_image_alt', true);
+        $img['uri'] = get_permalink($post_id);
+        $img['class'] = 'gallery-thumb';
+        //if tag is in arg, then add it to the uri
+        if($tag) {
+            $img['uri'] .= '?tag=' . $tag;
+        }
+
+        //assemble img html
+        $html = '<a href="' . $img['uri'] . '">';
+        $html .= '<div class="image-info-overlay d-flex justify-content-center align-items-center"><h3>'. $img['title']. '</h3></div>';
+        $html .= '<img class="' . $img['class'] .'" src="' . $img['src'] . '" ';
+        $html .= '"alt="' . $img['alt'] . '">';
+        $html .= '</a>';
+
+        //return html
+        return $html;
     }
-    
-    //assemble img html
-    $html = '<a href="' . $img['uri'] . '">';
-    $html .= '<div class="image-info-overlay d-flex justify-content-center align-items-center"><h3>'. $img['title']. '</h3></div>';
-    $html .= '<img class="' . $img['class'] .'" src="' . $img['src'] . '" ';
-    $html .= '"alt="' . $img['alt'] . '">';
-    $html .= '</a>';
-    
-    //output img html to frontend
-    echo $html;
 }
+
+function catgal_get_images_setup() {
+    new CategoryGallery('vehicle-wraps');
+}
+add_action('setup_theme', 'catgal_get_images_setup');
+
+
+
+
+
 
 
 
