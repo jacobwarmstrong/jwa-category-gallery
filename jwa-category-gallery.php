@@ -1,6 +1,6 @@
 <?php
 /*
-Plugin Name: Category-Gallery
+Plugin Name: JWA-Category-Gallery
 Description: A Gallery that shows images based on a image's designated category
 Author: Jacob W Armstrong
 */
