@@ -5,6 +5,17 @@ Description: A Gallery that shows images based on a image's designated category
 Author: Jacob W Armstrong
 */
 
+//use our attachment.php teamplate on attachment pages
+add_filter('template_include', 'catgal_use_attachment');
+function catgal_use_attachment( $template )
+{
+    if( get_post_type() ==='attachment') {
+        $template = plugin_dir_path(__FILE__).'attachment.php';
+    }
+
+    return $template;
+}
+
 // add categories for attachments
 function add_categories_for_attachments() {
     register_taxonomy_for_object_type( 'category', 'attachment' );
@@ -26,6 +37,31 @@ function catgal_get_images_setup() {
     new CategoryGallery($tag);
 }
 add_action('setup_theme', 'catgal_get_images_setup');
+
+function catgal_scripts() {
+    //update jquery to 3.1.1
+    //required for custom image gallery. Consider dumping because generate press is against jquery apparantly
+    wp_deregister_script('jquery');
+	wp_enqueue_script('jquery', 'https://ajax.googleapis.com/ajax/libs/jquery/3.1.1/jquery.min.js', array(), null, true);
+    
+    wp_enqueue_style('catgal_style', plugin_dir_url(__FILE__).'style.css');
+    
+    //remove bootstrap dependency
+    //wp_enqueue_style( 'bootstrap-style', "https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" );
+
+    //bootstrap gallery related enqueues
+    wp_enqueue_script( 'charmer-image-spinner', plugins_url('/js/image-loading-spinner.js',__FILE__), array('jquery'), _S_VERSION, true );
+
+    //wp_enqueue_script( 'bootstrap-js-popper', "https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js", array('jquery'), _S_VERSION, true );
+
+    //wp_enqueue_script( 'bootstrap-js', "https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js", array('jquery'), _S_VERSION, true );
+
+    wp_enqueue_script( 'charmer-image-lightbox-hover', plugins_url('/js/image-lightbox.js',__FILE__), array('jquery'), _S_VERSION, true );
+
+    wp_enqueue_script( 'charmer-thumbnail-scale', plugins_url('/js/thumbnail-scale-on-hover.js',__FILE__), array('jquery'), _S_VERSION, true );
+} 
+
+add_action('wp_enqueue_scripts', 'catgal_scripts');
 
 class CategoryGallery {
     //properties
@@ -85,7 +121,7 @@ class CategoryGallery {
                 endif;
                 $thestuff .= '</div>';
             }
-            $thestuff .= '<div class="charmer-gallery row">';
+            $thestuff .= '<div class="row">';
         
                 foreach ($this->htmlImages as $html) {
                  $thestuff .= $html;
@@ -108,7 +144,7 @@ class CategoryGallery {
         }
 
         //assemble img html
-        $html = '<div class="col-md-4 image-boundaries">';
+        $html = '<div class="gallery-column image-boundaries">';
         $html .= '<a href="' . $img['uri'] . '">';
         $html .= '<div class="image-info-overlay d-flex justify-content-center align-items-center"><h3>'. $img['title']. '</h3></div>';
         $html .= '<img class="' . $img['class'] .'" src="' . $img['src'] . '" ';
